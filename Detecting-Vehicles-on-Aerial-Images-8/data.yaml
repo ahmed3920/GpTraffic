@@ -1,0 +1,15 @@
+names:
+- bus
+- cars
+- truck
+- van
+nc: 4
+roboflow:
+  license: CC BY 4.0
+  project: drone-2wyje
+  url: https://universe.roboflow.com/roboflow-jvuqo/drone-2wyje/dataset/8
+  version: 8
+  workspace: roboflow-jvuqo
+test: ../test/images
+train: ../Detecting-Vehicles-on-Aerial-Images-8/train/images
+val: ../Detecting-Vehicles-on-Aerial-Images-8/valid/images
