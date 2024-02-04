@@ -4,16 +4,16 @@ from pathlib import Path
 
 def _get_lane_destination(lane_index):
     # Helper method to determine the destination based on the lane index
-    if lane_index in [0, 1, 3, 4, 7, 8, 9, 10]:
+    if lane_index in [0, 1, 3, 4, 6,7, 9, 10]:
         return 'multi_direction'
     elif lane_index == 2:
         return 'south'
     elif lane_index == 5:
-        return 'east'
-    elif lane_index == 6:
         return 'north'
-    elif lane_index == 11:
+    elif lane_index == 8:
         return 'west'
+    elif lane_index == 11:
+        return 'east'
     else:
         return 1  # Default value if the lane index is unexpected
 
@@ -25,7 +25,7 @@ class ResultsSaver:
 
     def save_results(self, frame, direction, total_counts, lane_counts, object_counts):
         # Method to save results for a specific frame and direction
-        lane_indices = {"North": [3, 4, 5], "East": [0, 1, 2], "South": [9, 10, 11], "West": [6, 7, 8]}
+        lane_indices = { "East": [0, 1, 2], "West": [3, 4, 5], "South": [6, 7, 8],"North": [9, 10, 11]}
 
         # Create a dictionary to store results in JSON format
         json_data = {
@@ -40,7 +40,8 @@ class ResultsSaver:
             # Populate lane-specific data in the JSON structure
             json_data['lanes'][lane_key] = {
                 'Total': lane_counts.get(i, 0),
-                'ObjectCounts': {label: object_counts.get(label, 0) for label in ["car", "bus", "truck", "cycle"]},
+                'ObjectCounts': {label: object_counts[i][label] for label in ["car", "bus", "truck", "cycle"]},
+
                 'destination': _get_lane_destination(i)
             }
 

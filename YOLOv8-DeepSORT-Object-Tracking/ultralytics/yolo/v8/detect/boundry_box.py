@@ -1,6 +1,9 @@
 from collections import deque
 import numpy as np
 import cv2
+import time
+from numpy import random
+
 
 data_deque = {}
 palette = (2 * 11 - 1, 2 * 15 - 1, 2 ** 20 - 1)
@@ -40,11 +43,11 @@ def xyxy_to_tlwh(bbox_xyxy):
 def compute_color_for_labels(label):
     if label == 0:  # person
         color = (85, 45, 255)
-    elif label == 2:  # Car
+    elif label == 1:  # Car
         color = (222, 82, 175)
-    elif label == 3:  # Motobike
+    elif label == 2:  # Motobike
         color = (0, 204, 255)
-    elif label == 5:  # Bus
+    elif label == 3:  # Bus
         color = (0, 149, 255)
     else:
         color = [int((p * (label ** 2 - label + 1)) % 255) for p in palette]
@@ -74,42 +77,68 @@ def draw_border(img, pt1, pt2, color, thickness, r, d):
     return img
 
 def UI_box(x, img, color=None, label=None, line_thickness=None):
-    tl = line_thickness or round(0.002 * (img.shape[0] + img.shape[1]) / 2) + 1
-    color = color or [0, 255, 255]
+    tl = line_thickness or round(0.002 * (img.shape[0] + img.shape[1]) / 2) + 1  # line/font thickness
+    color = color or [random.randint(0, 255) for _ in range(3)]
     c1, c2 = (int(x[0]), int(x[1])), (int(x[2]), int(x[3]))
     cv2.rectangle(img, c1, c2, color, thickness=tl, lineType=cv2.LINE_AA)
     if label:
-        tf = max(tl - 1, 1)
+        tf = max(tl - 1, 1)  # font thickness
         t_size = cv2.getTextSize(label, 0, fontScale=tl / 3, thickness=tf)[0]
+
         img = draw_border(img, (c1[0], c1[1] - t_size[1] - 3), (c1[0] + t_size[0], c1[1] + 3), color, 1, 8, 2)
+
         cv2.putText(img, label, (c1[0], c1[1] - 2), 0, tl / 3, [225, 255, 255], thickness=tf, lineType=cv2.LINE_AA)
 
-def draw_boxes(img, bbox, names, object_id, identities=None, offset=(0, 0)):
+def calculate_distance(point1, point2):
+    distance_pixels=np.sqrt((point2[0] - point1[0]) ** 2 + (point2[1] - point1[1]) ** 2)
+    return distance_pixels* 0.05
+
+# Function to calculate speed
+def calculate_speed(distance, time_elapsed):
+    if time_elapsed > 0:
+        return (distance/1000) / (time_elapsed/3600)
+    else:
+        return 0
+def draw_boxes(img, bbox, names, object_id, identities=None, offset=(0, 0),frame_start_time=None):
+    if frame_start_time is None:
+        frame_start_time = time.time()
     for key in list(data_deque):
         if key not in identities:
             data_deque.pop(key)
 
     for i, box in enumerate(bbox):
-        x1, y1, x2, y2 = [int(i) for i in box]
-        x1 += offset[0]
-        x2 += offset[0]
-        y1 += offset[1]
-        y2 += offset[1]
+            x1, y1, x2, y2 = [int(i) for i in box]
+            x1 += offset[0]
+            x2 += offset[0]
+            y1 += offset[1]
+            y2 += offset[1]
 
-        center = (int((x2 + x1) / 2), int((y2 + y2) / 2))
-        id_f = int(identities[i]) if identities is not None else 0
+            # code to find center of bottom edge
+            center = (int((x2 + x1) / 2), int((y2 + y2) / 2))
 
-        if id_f not in data_deque:
-            data_deque[id_f] = deque(maxlen=64)
-        color = compute_color_for_labels(object_id[i])
-        obj_name = names[object_id[i]]
-        label = '{}{:d}'.format("", id_f) + ":" + '%s' % obj_name
+            # get ID of object
+            id = int(identities[i]) if identities is not None else 0
 
-        data_deque[id_f].appendleft(center)
-        UI_box(box, img, label=label, color=color, line_thickness=1)
-        for i in range(1, len(data_deque[id_f])):
-            if data_deque[id_f][i - 1] is None or data_deque[id_f][i] is None:
-                continue
-            thickness = int(np.sqrt(64 / float(i + i)) * 1.5)
-            cv2.line(img, data_deque[id_f][i - 1], data_deque[id_f][i], color, thickness)
+            # create new buffer for new object
+            if id not in data_deque:
+                data_deque[id] = deque(maxlen=120)
+            color = compute_color_for_labels(object_id[i])
+            obj_name = names[object_id[i]]
+            label = '{}{:d}'.format("", id) + ":" + '%s' % (obj_name)
+
+            # add center to buffer
+            data_deque[id].appendleft(center)
+            speed = 0
+            for i in range(1, len(data_deque[id])):
+                if data_deque[id][i - 1] is None or data_deque[id][i] is None:
+                    continue
+                thickness = int(np.sqrt(64 / float(i + i)) * 1.5)
+                cv2.line(img, data_deque[id][i - 1], data_deque[id][i], (147, 20, 255), 2)
+            if len(data_deque[id]) >= 2:  # 2
+                distance = calculate_distance(data_deque[id][0], data_deque[id][1])
+                time_elapsed = time.time() - frame_start_time
+                speed = calculate_speed(distance, time_elapsed)
+                label += f" Speed: {speed:.2f} m/s"
+
+                UI_box(box, img, label=label, color=color, line_thickness=1)
     return img
