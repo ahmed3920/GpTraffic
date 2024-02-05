@@ -1,0 +1,139 @@
+{
+    "Total number of vehicles": 43,
+    "lanes": {
+        "East": {
+            "Lane1": {
+                "Total": 8,
+                "ObjectCounts": {
+                    "car": 7,
+                    "bus": 0,
+                    "truck": 0,
+                    "cycle": 0
+                },
+                "destination": "multi_direction"
+            },
+            "Lane2": {
+                "Total": 8,
+                "ObjectCounts": {
+                    "car": 7,
+                    "bus": 0,
+                    "truck": 0,
+                    "cycle": 0
+                },
+                "destination": "multi_direction"
+            },
+            "Lane3": {
+                "Total": 7,
+                "ObjectCounts": {
+                    "car": 7,
+                    "bus": 0,
+                    "truck": 0,
+                    "cycle": 0
+                },
+                "destination": "south"
+            }
+        },
+        "North": {
+            "Lane4": {
+                "Total": 4,
+                "ObjectCounts": {
+                    "car": 5,
+                    "bus": 0,
+                    "truck": 0,
+                    "cycle": 0
+                },
+                "destination": "multi_direction"
+            },
+            "Lane5": {
+                "Total": 5,
+                "ObjectCounts": {
+                    "car": 5,
+                    "bus": 0,
+                    "truck": 0,
+                    "cycle": 0
+                },
+                "destination": "multi_direction"
+            },
+            "Lane6": {
+                "Total": 5,
+                "ObjectCounts": {
+                    "car": 5,
+                    "bus": 0,
+                    "truck": 0,
+                    "cycle": 0
+                },
+                "destination": "east"
+            }
+        },
+        "West": {
+            "Lane7": {
+                "Total": 2,
+                "ObjectCounts": {
+                    "car": 1,
+                    "bus": 0,
+                    "truck": 0,
+                    "cycle": 0
+                },
+                "destination": "north"
+            },
+            "Lane8": {
+                "Total": 1,
+                "ObjectCounts": {
+                    "car": 1,
+                    "bus": 0,
+                    "truck": 0,
+                    "cycle": 0
+                },
+                "destination": "multi_direction"
+            },
+            "Lane9": {
+                "Total": 1,
+                "ObjectCounts": {
+                    "car": 1,
+                    "bus": 0,
+                    "truck": 0,
+                    "cycle": 0
+                },
+                "destination": "multi_direction"
+            }
+        },
+        "South": {
+            "Lane10": {
+                "Total": 1,
+                "ObjectCounts": {
+                    "car": 1,
+                    "bus": 0,
+                    "truck": 0,
+                    "cycle": 0
+                },
+                "destination": "multi_direction"
+            },
+            "Lane11": {
+                "Total": 0,
+                "ObjectCounts": {
+                    "car": 1,
+                    "bus": 0,
+                    "truck": 0,
+                    "cycle": 0
+                },
+                "destination": "multi_direction"
+            },
+            "Lane12": {
+                "Total": 1,
+                "ObjectCounts": {
+                    "car": 1,
+                    "bus": 0,
+                    "truck": 0,
+                    "cycle": 0
+                },
+                "destination": "west"
+            }
+        }
+    },
+    "ObjectCounts": {
+        "car": 43,
+        "bus": 0,
+        "truck": 0,
+        "cycle": 0
+    }
+}

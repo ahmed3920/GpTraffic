@@ -1,0 +1,35 @@
+{
+  "Total number of vehicles": 16,
+  "lanes": {
+    "Lane4": {
+      "Total": 6,
+      "ObjectCounts": {
+        "car": 6,
+        "bus": 0,
+        "truck": 0,
+        "cycle": 0
+      },
+      "destination": "multi_direction"
+    },
+    "Lane5": {
+      "Total": 8,
+      "ObjectCounts": {
+        "car": 8,
+        "bus": 0,
+        "truck": 0,
+        "cycle": 0
+      },
+      "destination": "multi_direction"
+    },
+    "Lane6": {
+      "Total": 2,
+      "ObjectCounts": {
+        "car": 2,
+        "bus": 0,
+        "truck": 0,
+        "cycle": 0
+      },
+      "destination": "north"
+    }
+  }
+}
