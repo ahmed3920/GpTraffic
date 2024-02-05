@@ -1,6 +1,6 @@
-
-
-
+#
+#
+#
 import os
 import torch
 
@@ -162,14 +162,23 @@ class DetectionPredictor(BasePredictor):
         self.all_objects(all_object_counts)
         for index in range(12):
             index+=2
-            self.save_result_road(index, frame)
+            if frame==1 or frame%900==0:
+               self.save_result_road(index, frame)
+            else:
+                break
+            # self.save_result_road(index, frame)
         # Print the total number of vehicles in the current frame
         print(f'Frame {frame}: Total number of vehicles - {self.total_counts}')
         # Save the master results file containing total counts in each direction
-        master_json_filepath = self.results_saver.save_master_results(frame, self.total_counts_direction,
+        if frame == 1 or frame%900==0:
+                master_json_filepath = self.results_saver.save_master_results(frame, self.total_counts_direction,
                                                                      self.total_counts, all_object_counts)
-        # Store the path of the saved master JSON result file
-        self.results_data.append(master_json_filepath)
+                # Store the path of the saved master JSON result file
+                self.results_data.append(master_json_filepath)
+        # master_json_filepath = self.results_saver.save_master_results(frame, self.total_counts_direction,
+        #                                                               self.total_counts, all_object_counts)
+        # # Store the path of the saved master JSON result file
+        # self.results_data.append(master_json_filepath)
         return log_string
 
 
@@ -192,4 +201,4 @@ if __name__ == "__main__":
 
 
 
- # python predict.py model=best7.torchscript source="testing.mp4" show=True
+ #  python predict.py model=last.torchscript source="testing.mp4" show=True
