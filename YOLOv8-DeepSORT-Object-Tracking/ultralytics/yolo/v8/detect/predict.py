@@ -1,6 +1,6 @@
 # Ultralytics YOLO 🚀, GPL-3.0 license
 
-import hydra
+
 
 
 #As YOLOv8 is built using PyTorch, To perform object detection/tracking using YOLOv8 we need to improt the PyTorch module.
