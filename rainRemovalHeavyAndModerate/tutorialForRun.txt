@@ -1,0 +1,6 @@
+
+run this for moderate rain
+python test_real.py --ckpt ckpt/r100h --real_dir input_img/moderate
+
+run this for heavy rain
+python test_real.py --ckpt ckpt/heavyrain --real_dir input_img/heavy
