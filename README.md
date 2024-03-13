@@ -1,1 +1,1 @@
-# run from example.py
+run from example.py
