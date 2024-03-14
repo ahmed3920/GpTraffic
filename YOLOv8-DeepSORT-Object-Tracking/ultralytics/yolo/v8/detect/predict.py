@@ -39,8 +39,8 @@ class DetectionPredictor(BasePredictor):
         self.results_data = []  # List to store paths of JSON result files
         self.x = None
         self.lane_counts = {}  # Dictionary to store counts for each lane
-        self.avg_w = 1
-        self.avg_h = 1
+        self.avg_w = 34
+        self.avg_h = 30
         self.img = None
         self.total_counts_direction = {}  # Dictionary to store total counts in each direction
         self.results_saver = ResultsSaver(save_dir=self.save_dir)
@@ -171,22 +171,27 @@ class DetectionPredictor(BasePredictor):
         self.draw_outputs(outputs, im0)
         self.all_objects(all_object_counts)
 
-
-
-
-        for index in range(12):
+        for index in range( 12 ):
             index += 2
-            self.save_result_road(index, frame)
+            if frame == 1 or frame % 900 == 0:
+                self.save_result_road( index, frame )
+            else:
+                break
+            # self.save_result_road(index, frame)
         # Print the total number of vehicles in the current frame
-        print(self.avg_h)
+        print( f'Frame {frame}: Total number of vehicles - {self.total_counts}' )
         print(self.avg_w)
-        print(f'Frame {frame}: Total number of vehicles - {self.total_counts}')
-
+        print(self.avg_h)
         # Save the master results file containing total counts in each direction
-        master_json_filepath = self.results_saver.save_master_results(frame, self.total_counts_direction,
-                                                                     self.total_counts, all_object_counts)
-        # Store the path of the saved master JSON result file
-        self.results_data.append(master_json_filepath)
+        if frame == 1 or frame % 900 == 0:
+            master_json_filepath = self.results_saver.save_master_results( frame, self.total_counts_direction,
+                                                                           self.total_counts, all_object_counts )
+            # Store the path of the saved master JSON result file
+            self.results_data.append( master_json_filepath )
+        # master_json_filepath = self.results_saver.save_master_results(frame, self.total_counts_direction,
+        #                                                               self.total_counts, all_object_counts)
+        # # Store the path of the saved master JSON result file
+        # self.results_data.append(master_json_filepath)
         return log_string
 
 
