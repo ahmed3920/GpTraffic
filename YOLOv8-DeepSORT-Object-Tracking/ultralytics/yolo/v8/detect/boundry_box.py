@@ -99,46 +99,66 @@ def calculate_speed(distance, time_elapsed):
         return (distance/1000) / (time_elapsed/3600)
     else:
         return 0
-def draw_boxes(img, bbox, names, object_id, identities=None, offset=(0, 0),frame_start_time=None):
+def draw_boxes(img, bbox, names, object_id, identities=None, offset=(0, 0), frame_start_time=None):
     if frame_start_time is None:
         frame_start_time = time.time()
     for key in list(data_deque):
         if key not in identities:
             data_deque.pop(key)
 
+    total_width = 0
+    total_height = 0
+    total_boxes = 0
+
     for i, box in enumerate(bbox):
-            x1, y1, x2, y2 = [int(i) for i in box]
-            x1 += offset[0]
-            x2 += offset[0]
-            y1 += offset[1]
-            y2 += offset[1]
+        x1, y1, x2, y2 = [int(i) for i in box]
+        x1 += offset[0]
+        x2 += offset[0]
+        y1 += offset[1]
+        y2 += offset[1]
 
-            # code to find center of bottom edge
-            center = (int((x2 + x1) / 2), int((y2 + y2) / 2))
+        # code to find center of bottom edge
+        center = (int((x2 + x1) / 2), int((y2 + y1) / 2))
 
-            # get ID of object
-            id = int(identities[i]) if identities is not None else 0
+        # get ID of object
+        id = int(identities[i]) if identities is not None else 0
 
-            # create new buffer for new object
-            if id not in data_deque:
-                data_deque[id] = deque(maxlen=120)
-            color = compute_color_for_labels(object_id[i])
-            obj_name = names[object_id[i]]
-            label = '{}{:d}'.format("", id) + ":" + '%s' % (obj_name)
+        # create new buffer for new object
+        if id not in data_deque:
+            data_deque[id] = deque(maxlen=64)
+        color = compute_color_for_labels(object_id[i])
+        obj_name = names[object_id[i]]
+        label = '{}{:d}'.format("", id) + ":" + '%s' % (obj_name)
 
-            # add center to buffer
-            data_deque[id].appendleft(center)
-            speed = 0
-            for i in range(1, len(data_deque[id])):
-                if data_deque[id][i - 1] is None or data_deque[id][i] is None:
-                    continue
-                thickness = int(np.sqrt(64 / float(i + i)) * 1.5)
-                cv2.line(img, data_deque[id][i - 1], data_deque[id][i], (147, 20, 255), 2)
-            if len(data_deque[id]) >= 2:  # 2
-                distance = calculate_distance(data_deque[id][0], data_deque[id][1])
-                time_elapsed = time.time() - frame_start_time
-                speed = calculate_speed(distance, time_elapsed)
-                label += f" Speed: {speed:.2f} m/s"
+        # calculate width and height of the bounding box
+        w = x2 - x1
+        h = y2 - y1
 
-                UI_box(box, img, label=label, color=color, line_thickness=1)
-    return img
+        # add width and height to label
+        label += f" Width: {w:.2f}, Height: {h:.2f}"
+
+        # add width and height to total
+        total_width += w
+        total_height += h
+        total_boxes += 1
+
+        # add center to buffer
+        data_deque[id].appendleft(center)
+        speed = 0
+        for i in range(1, len(data_deque[id])):
+            if data_deque[id][i - 1] is None or data_deque[id][i] is None:
+                continue
+            thickness = int(np.sqrt(64 / float(i + i)) * 1.5)
+            cv2.line(img, data_deque[id][i - 1], data_deque[id][i], (147, 20, 255), 2)
+        if len(data_deque[id]) >= 2:  # 2
+            distance = calculate_distance(data_deque[id][0], data_deque[id][1])
+            time_elapsed = time.time() - frame_start_time
+            speed = calculate_speed(distance, time_elapsed)
+            label += f" Speed: {speed:.2f} m/s"
+
+            UI_box(box, img, label=label, color=color, line_thickness=1)
+
+    # calculate average width and height
+    avg_width = total_width / total_boxes
+    avg_height = total_height / total_boxes
+    return img, avg_width, avg_height
