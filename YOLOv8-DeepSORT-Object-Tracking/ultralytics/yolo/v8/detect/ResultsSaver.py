@@ -43,16 +43,18 @@ class ResultsSaver:
     def __init__(self, save_dir):
         # Constructor to initialize the ResultsSaver object with a save directory
         self.save_dir = Path(save_dir)
+        self.avw=None
+        self.avh=None
 
     def save_results(self, frame, direction, total_counts, lane_counts, object_counts, avgw, avhh):
+        self.avh = avhh
+        self.avw = avgw
         # Method to save results for a specific frame and direction
         lane_indices = {"East": [0, 1, 2], "West": [3, 4, 5], "South": [6, 7, 8], "North": [9, 10, 11]}
 
         # Create a dictionary to store results in JSON format
         json_data = {
             'Total number of vehicles': total_counts,
-            'Max direction': max_direction,
-            'ratio of vehicles': round(max_area /(avgw * avhh)),
             'lanes': {}
         }
 
@@ -89,6 +91,8 @@ class ResultsSaver:
     def save_master_results(self, frame, total_counts_direction, total_counts, all_object_counts):
         # Method to save master results combining data from different directions
         master_json_data = {
+            'Max direction': max_direction,
+            'ratio of vehicles': round( max_area / (self.avw * self.avh) ),
             'Total number of vehicles': total_counts,
             'lanes': {},
             'ObjectCounts': all_object_counts
