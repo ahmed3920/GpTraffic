@@ -1,14 +1,14 @@
-#
-#
-#
-import os
+
+
+
+#import os
 import torch
 
 import hydra
 
 from boundry_box import draw_boxes, xyxy_to_xywh
 from code_tracker import init_tracker
-from object_lane import lanes ,opposite_lanes
+from object_lane import lanes, opposite_lanes
 from ResultsSaver import ResultsSaver
 from ultralytics.yolo.engine.predictor import BasePredictor
 from ultralytics.yolo.utils import DEFAULT_CONFIG, ROOT, ops
@@ -17,7 +17,7 @@ from ultralytics.yolo.utils.plotting import Annotator
 
 deepsort = init_tracker()
 
-import cProfile
+#import cProfile
 
 
 
@@ -29,11 +29,19 @@ model = None
 class DetectionPredictor(BasePredictor):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.counts = None
+        self.total_counts = None
+        self.oids = None
+        self.confs = None
+        self.xywh_bboxs = None
         self.object_counts = None
         self.txt_path = None
         self.results_data = []  # List to store paths of JSON result files
         self.x = None
         self.lane_counts = {}  # Dictionary to store counts for each lane
+        self.avg_w = 1
+        self.avg_h = 1
+        self.img = None
         self.total_counts_direction = {}  # Dictionary to store total counts in each direction
         self.results_saver = ResultsSaver(save_dir=self.save_dir)
 
@@ -59,14 +67,14 @@ class DetectionPredictor(BasePredictor):
             pred[:, :4] = ops.scale_boxes(img.shape[2:], pred[:, :4], shape).round()
 
         return preds
-    def draw_outputs(self,outputs,im0):
+    def draw_outputs(self, outputs, im0):
         if len(outputs) > 0:
             bbox_xyxy = outputs[:, :4]
             identities = outputs[:, -2]
             object_id = outputs[:, -1]
-            draw_boxes(im0, bbox_xyxy, self.model.names, object_id, identities)
+            self.img, self.avg_w, self.avg_h = draw_boxes(im0, bbox_xyxy, self.model.names, object_id, identities)
 
-    def save_result_road(self, index,frame):
+    def save_result_road(self, index, frame):
         if (index + 1) % 3 == 0:
             direction = ["East", "West", "South", "North"][(index + 1) // 3 - 1]
 
@@ -75,7 +83,7 @@ class DetectionPredictor(BasePredictor):
 
             total_counts_3lanes = sum(self.lane_counts[i] for i in valid_indices)
             json_filepath = self.results_saver.save_results(frame, direction, total_counts_3lanes,
-                                                            self.lane_counts, self.object_counts)
+                                                            self.lane_counts, self.object_counts, self.avg_w, self.avg_h)
 
             # Store the path of the saved JSON result file
             self.results_data.append(json_filepath)
@@ -84,12 +92,12 @@ class DetectionPredictor(BasePredictor):
             self.total_counts_direction.setdefault(direction, 0)
             self.total_counts_direction[direction] += total_counts_3lanes
 
-    def all_objects(self,all_object_counts):
+    def all_objects(self, all_object_counts):
         for index in range(12):
            for object_label, object_count in self.object_counts[index].items():
                if object_label in all_object_counts:
                 all_object_counts[object_label] += object_count
-    def check_lanes(self,center,cls):
+    def check_lanes(self, center, conf, cls, x_c, y_c, bbox_w, bbox_h):
         for index, lane in enumerate(lanes):
 
             # Check if the center of the bounding box is inside the current lane
@@ -98,7 +106,9 @@ class DetectionPredictor(BasePredictor):
                 self.total_counts += 1
                 self.lane_counts.setdefault(index, 0)
                 self.lane_counts[index] += 1
-
+                self.confs.append([conf.item()])
+                self.oids.append(int(cls))
+                self.xywh_bboxs.append([x_c, y_c, bbox_w, bbox_h])
                 object_label = self.model.names[int(cls)]
                 if object_label in self.object_counts[index]:
                     self.object_counts[index][object_label] += 1
@@ -143,8 +153,8 @@ class DetectionPredictor(BasePredictor):
             x_c, y_c, bbox_w, bbox_h = xyxy_to_xywh(*xyxy)
             center = (x_c, y_c)
             # Iterate through each detected bounding box
-            self.check_lanes(center, cls)
-            for index,olane in enumerate(opposite_lanes):
+            self.check_lanes(center, conf, cls, x_c, y_c, bbox_w, bbox_h)
+            for index, olane in enumerate(opposite_lanes):
                 if olane.is_point_inside(center):
                     self.confs.append([conf.item()])
                     self.oids.append(int(cls))
@@ -160,25 +170,23 @@ class DetectionPredictor(BasePredictor):
         # Draw bounding boxes with IDs on the image
         self.draw_outputs(outputs, im0)
         self.all_objects(all_object_counts)
+
+
+
+
         for index in range(12):
-            index+=2
-            if frame==1 or frame%900==0:
-               self.save_result_road(index, frame)
-            else:
-                break
-            # self.save_result_road(index, frame)
+            index += 2
+            self.save_result_road(index, frame)
         # Print the total number of vehicles in the current frame
+        print(self.avg_h)
+        print(self.avg_w)
         print(f'Frame {frame}: Total number of vehicles - {self.total_counts}')
+
         # Save the master results file containing total counts in each direction
-        if frame == 1 or frame%900==0:
-                master_json_filepath = self.results_saver.save_master_results(frame, self.total_counts_direction,
+        master_json_filepath = self.results_saver.save_master_results(frame, self.total_counts_direction,
                                                                      self.total_counts, all_object_counts)
-                # Store the path of the saved master JSON result file
-                self.results_data.append(master_json_filepath)
-        # master_json_filepath = self.results_saver.save_master_results(frame, self.total_counts_direction,
-        #                                                               self.total_counts, all_object_counts)
-        # # Store the path of the saved master JSON result file
-        # self.results_data.append(master_json_filepath)
+        # Store the path of the saved master JSON result file
+        self.results_data.append(master_json_filepath)
         return log_string
 
 
@@ -192,6 +200,8 @@ def predict(cfg):
     cfg.source = cfg.source if cfg.source is not None else ROOT / "assets"
     predictor = DetectionPredictor(cfg)
     predictor()
+
+
     #cProfile.run(predictor(), sort='cumulative')
 
 
@@ -201,4 +211,4 @@ if __name__ == "__main__":
 
 
 
- #  python predict.py model=last.torchscript source="testing.mp4" show=True
+#python predict.py model=final_model.torchscript source="testing.mp4" show=True
