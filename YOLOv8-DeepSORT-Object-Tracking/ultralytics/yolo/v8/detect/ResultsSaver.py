@@ -9,15 +9,31 @@ from pathlib import Path
 #lane 9 west
 #lane 10 south
 #[2,3,10]#[0,5,7]#[1,8,9]#[4,6,11]
+area = {
+    "east": {"width": 602.97, "height": 78.39},
+    "north": {"width": 89.15, "height": 240.95},
+    "west": {"width": 441.36, "height": 91.14},
+    "south": {"width": 95.45, "height": 221.29},
+}
+max_area = 0
+max_direction = ""
+for direction, dimensions in area.items():
+    area2 = dimensions["width"] * dimensions["height"]
+    if area2 > max_area:
+        max_area = area2
+        max_direction = direction
+
+
+
 def _get_lane_destination(lane_index):
     # Helper method to determine the destination based on the lane index
-    if lane_index in [2,3,10]:
+    if lane_index in [2, 3, 10]:
         return 'south'
-    elif lane_index in [0,5,7]:
+    elif lane_index in [0, 5, 7]:
         return 'north'
-    elif lane_index in [1,8,9]:
+    elif lane_index in [1, 8, 9]:
         return 'west'
-    elif lane_index in [4,6,11]:
+    elif lane_index in [4, 6, 11]:
         return 'east'
     else:
         return 1  # Default value if the lane index is unexpected
@@ -28,14 +44,16 @@ class ResultsSaver:
         # Constructor to initialize the ResultsSaver object with a save directory
         self.save_dir = Path(save_dir)
 
-    def save_results(self, frame, direction, total_counts, lane_counts, object_counts):
+    def save_results(self, frame, direction, total_counts, lane_counts, object_counts, avgw, avhh):
         # Method to save results for a specific frame and direction
-        lane_indices = { "East": [0, 1, 2], "West": [3, 4, 5], "South": [6, 7, 8],"North": [9, 10, 11]}
+        lane_indices = {"East": [0, 1, 2], "West": [3, 4, 5], "South": [6, 7, 8], "North": [9, 10, 11]}
 
         # Create a dictionary to store results in JSON format
         json_data = {
             'Total number of vehicles': total_counts,
-            'lanes': {},
+            'Max direction': max_direction,
+            'ratio of vehicles': round(max_area /(avgw * avhh)),
+            'lanes': {}
         }
 
         # Iterate over lane indices for the given direction
@@ -54,7 +72,6 @@ class ResultsSaver:
             json_data['lanes'][lane_key] = {
                 'Total': lane_counts.get(i, 0),
                 'ObjectCounts': {label: object_counts[i][label] for label in ["car", "bus", "truck", "cycle"]},
-
                 'destination': _get_lane_destination(i)
             }
 
